@@ -12,7 +12,7 @@ class GameObject:
         self.rotateVel = 200
         self.keys = dict(left=False, right=False, up=False, down=False)
 
-        image = pyglet.image.load("car.png")
+        image = pyglet.image.load("images/car.png")
 
         self.sprite = pyglet.sprite.Sprite(image, x=self.posx, y=self.posy)
         self.sprite.scale = .05
