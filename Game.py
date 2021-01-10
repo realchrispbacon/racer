@@ -17,8 +17,8 @@ class Car:
     START_POS_Y = 250
     WIDTH = 40
     HEIGHT = 20
-    TOP_SPEED = 4
-    ROTATION_VELOCITY = 4
+    TOP_SPEED = 2
+    ROTATION_VELOCITY = 2
 
     def __init__(self):
         self.x = Car.START_POS_X
@@ -45,16 +45,11 @@ class Car:
         self.accelerating = False
         self.reversing = False
 
-    # def update(self):
-    #     self.updatePosition()
-        
 
     def update(self):
         direction = ((self.carSprite.rotation + 90) % 360)
-        # print("direction: " + str(direction))
 
         if self.accelerating == True:
-            
             self.velx = math.sin(direction * (math.pi / 180))
             self.vely = math.cos(direction * (math.pi / 180))
             self.x = self.x + self.velx * Car.TOP_SPEED
@@ -68,9 +63,9 @@ class Car:
 
         if self.turningLeft == True:
             self.carSprite.rotation -= Car.ROTATION_VELOCITY
+
         if self.turningRight == True:
             self.carSprite.rotation += Car.ROTATION_VELOCITY
-
 
         self.carSprite.update(x=self.x, y=self.y)
 
