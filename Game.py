@@ -110,7 +110,8 @@ class Car:
     MAX_VELOCITY = 5
     MAX_ROTATION_VELOCITY = 5
     ACCELERATION = .1
-    ROTATION_SPEED = 1
+    ROTATION_ACCELERATION = .3
+    FRICTION = .1
 
     def __init__(self, walls):
         self.x = Car.START_POS_X
@@ -195,16 +196,25 @@ class Car:
         elif self.velocity < -Car.MAX_VELOCITY:
             self.velocity = -Car.MAX_VELOCITY
 
+        #limit turining velocity
+        if self.rotationVelocity > Car.MAX_ROTATION_VELOCITY:
+            self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
+        elif self.rotationVelocity < -Car.MAX_ROTATION_VELOCITY:
+            self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
+
 
     def move(self):
+        #forwards and backwards motion
         self.velocity += self.acceleration
         self.velx = math.sin(self.direction * (math.pi / 180))
         self.vely = math.cos(self.direction * (math.pi / 180))
         self.x += self.velx * self.velocity
         self.y += self.vely * self.velocity
 
-        self.carSprite.rotation += self.rotationVelocity
+        #turning motion
+        self.rotationVelocity += self.rotationAcceleration
 
+        self.carSprite.rotation += self.rotationVelocity
         self.carSprite.update(x=self.x, y=self.y)
 
     def updateControls(self):
@@ -214,20 +224,32 @@ class Car:
         elif self.reversing == True:
             self.acceleration = -Car.ACCELERATION
         else:
-            self.acceleration = 0
+            #friction
+            if self.velocity > .1:
+                self.acceleration = -Car.FRICTION
+            elif self.velocity < -.1:
+                self.acceleration = Car.FRICTION
+            else:
+                self.velocity = 0
+                self.acceleration=0
 
         #turning movement 
         if self.turningLeft and self.velocity > 0:
-            self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
+            # self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
+            self.rotationAcceleration = -Car.ROTATION_ACCELERATION
         elif self.turningRight and self.velocity > 0:
-            self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
+            # self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
+            self.rotationAcceleration = Car.ROTATION_ACCELERATION
 
         #turining is opposite when moving backwards
         elif self.turningRight and self.velocity < 0:
-            self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
+            # self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
+            self.rotationAcceleration = -Car.ROTATION_ACCELERATION
         elif self.turningLeft and self.velocity < 0:
-            self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
+            # self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
+            self.rotationAcceleration = Car.ROTATION_ACCELERATION
         else:
+            self.rotationAcceleration = 0
             self.rotationVelocity = 0
 
 
