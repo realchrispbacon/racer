@@ -107,8 +107,10 @@ class Car:
     START_POS_Y = 250
     LENGTH = 40
     WIDTH = 20
-    TOP_SPEED = 2
-    ROTATION_VELOCITY = 2
+    MAX_VELOCITY = 5
+    MAX_ROTATION_VELOCITY = 5
+    ACCELERATION = .1
+    ROTATION_SPEED = 1
 
     def __init__(self, walls):
         self.x = Car.START_POS_X
@@ -118,8 +120,12 @@ class Car:
         self.width = Car.WIDTH
         self.length = Car.LENGTH
         self.direction = 0
+        self.acceleration = 0
+        self.velocity = 0
+        self.rotationAcceleration = 0
+        self.rotationVelocity = 0
 
-        self.dead = False
+        # self.dead = False
 
         #pyglet defs
         self.carPic = pyglet.image.load("images/car.png")
@@ -163,7 +169,8 @@ class Car:
         # BLcircle.draw()
 
         for wall in self.walls:
-            #front line
+
+            #front line, left line, right line, back line
             if linesCollided(wall.x1, wall.y1, wall.x2, wall.y2, FLcornerX, FLcornerY, FRcornerX, FRcornerY) or \
                 linesCollided(wall.x1, wall.y1, wall.x2, wall.y2, FLcornerX, FLcornerY, BLcornerX, BLcornerY) or \
                 linesCollided(wall.x1, wall.y1, wall.x2, wall.y2, FRcornerX, FRcornerY, BRcornerX, BRcornerY) or \
@@ -174,40 +181,57 @@ class Car:
                 wall.turnWhite()
                 # return False
             
-
-
     def update(self):
         self.direction = ((self.carSprite.rotation + 90) % 360)
 
-        if self.accelerating == True:
-            self.velx = math.sin(self.direction * (math.pi / 180))
-            self.vely = math.cos(self.direction * (math.pi / 180))
-            self.x = self.x + self.velx * Car.TOP_SPEED
-            self.y = self.y + self.vely * Car.TOP_SPEED
+        self.updateControls()
+        self.move()
+        self.limitations()
 
-        if self.reversing == True:
-            self.velx = math.sin(self.direction * (math.pi / 180))
-            self.vely = math.cos(self.direction * (math.pi / 180))
-            self.x = self.x - self.velx * Car.TOP_SPEED
-            self.y = self.y - self.vely * Car.TOP_SPEED
+    def limitations(self):
+        #limit velocity
+        if self.velocity > Car.MAX_VELOCITY:
+            self.velocity = Car.MAX_VELOCITY
+        elif self.velocity < -Car.MAX_VELOCITY:
+            self.velocity = -Car.MAX_VELOCITY
 
-        if self.accelerating:
-            if self.turningLeft == True:
-                self.carSprite.rotation -= Car.ROTATION_VELOCITY
-            if self.turningRight == True:
-                self.carSprite.rotation += Car.ROTATION_VELOCITY
-        if self.reversing:
-            if self.turningLeft == True:
-                self.carSprite.rotation += Car.ROTATION_VELOCITY
-            if self.turningRight == True:
-                self.carSprite.rotation -= Car.ROTATION_VELOCITY
+
+    def move(self):
+        self.velocity += self.acceleration
+        self.velx = math.sin(self.direction * (math.pi / 180))
+        self.vely = math.cos(self.direction * (math.pi / 180))
+        self.x += self.velx * self.velocity
+        self.y += self.vely * self.velocity
+
+        self.carSprite.rotation += self.rotationVelocity
 
         self.carSprite.update(x=self.x, y=self.y)
 
+    def updateControls(self):
+        #forwards and backwards movement
+        if self.accelerating == True:
+            self.acceleration = Car.ACCELERATION
+        elif self.reversing == True:
+            self.acceleration = -Car.ACCELERATION
+        else:
+            self.acceleration = 0
+
+        #turning movement 
+        if self.turningLeft and self.velocity > 0:
+            self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
+        elif self.turningRight and self.velocity > 0:
+            self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
+
+        #turining is opposite when moving backwards
+        elif self.turningRight and self.velocity < 0:
+            self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
+        elif self.turningLeft and self.velocity < 0:
+            self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
+        else:
+            self.rotationVelocity = 0
+
 
     def render(self):
-
         self.hitWall()
-
         self.update()
         self.carSprite.draw()
