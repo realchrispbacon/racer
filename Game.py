@@ -2,7 +2,7 @@ import pyglet
 from pyglet import shapes
 import math
 import pygame
-from helpermethods import *
+from helpermethods import linesCollided
 
 
 vec2 = pygame.math.Vector2
@@ -111,7 +111,8 @@ class Car:
     MAX_ROTATION_VELOCITY = 5
     ACCELERATION = .1
     ROTATION_ACCELERATION = .3
-    FRICTION = .1
+    # FRICTION = .1
+    FRICTION = .98
 
     def __init__(self, walls):
         self.x = Car.START_POS_X
@@ -120,11 +121,13 @@ class Car:
         self.vely = 0
         self.width = Car.WIDTH
         self.length = Car.LENGTH
-        self.direction = 0
+        self.direction = vec2(0,1)
         self.acceleration = 0
         self.velocity = 0
         self.rotationAcceleration = 0
         self.rotationVelocity = 0
+        self.driftMomentum = 0
+        self.driftFriction = 0.87
 
         # self.dead = False
 
@@ -183,13 +186,13 @@ class Car:
                 # return False
             
     def update(self):
-        self.direction = ((self.carSprite.rotation + 90) % 360)
+        # self.direction = ((self.carSprite.rotation + 90) % 360)
 
         self.updateControls()
         self.move()
-        self.limitations()
+        self.constraints()
 
-    def limitations(self):
+    def constraints(self):
         #limit velocity
         if self.velocity > Car.MAX_VELOCITY:
             self.velocity = Car.MAX_VELOCITY
@@ -205,55 +208,173 @@ class Car:
 
     def move(self):
         #forwards and backwards motion
-        self.velocity += self.acceleration
-        self.velx = math.sin(self.direction * (math.pi / 180))
-        self.vely = math.cos(self.direction * (math.pi / 180))
-        self.x += self.velx * self.velocity
-        self.y += self.vely * self.velocity
+        #friction
+        # if not self.accelerating and not self.reversing:
+        #     if self.velocity > .1:
+        #         self.acceleration = -Car.FRICTION
+        #     elif self.velocity < -.1:
+        #         self.acceleration = Car.FRICTION
+        #     else:
+        #         self.velocity = 0
+        #         self.acceleration=0
 
-        #turning motion
-        self.rotationVelocity += self.rotationAcceleration
 
-        self.carSprite.rotation += self.rotationVelocity
-        self.carSprite.update(x=self.x, y=self.y)
+
+
+
+
+        # self.direction = ((self.carSprite.rotation + 90) % 360)
+
+        # self.velocity += self.acceleration
+        # self.velocity *= Car.FRICTION
+
+        # x = math.cos(math.radians(self.direction))
+        # y = math.sin(math.radians(self.direction))
+        # driftVector = vec2(x, y)
+        # # driftVector = driftVector.rotate(90)
+
+        # addVector = vec2(0,0)
+        # addVector.x += self.velocity * x
+        # addVector.x += self.driftMomentum * driftVector.x
+        # addVector.y += self.velocity * y
+        # addVector.y += self.driftMomentum * driftVector.y
+        # self.driftMomentum *= self.driftFriction
+
+        # if addVector.length() != 0:
+        #     addVector.normalize()
+
+        # addVector.x * abs(self.velocity)
+        # addVector.y * abs(self.velocity)
+
+        # self.x += addVector.x
+        # self.y += addVector.y
+
+
+
+
+
+        # self.velocity += self.acceleration
+        # self.velx = math.sin(self.direction * (math.pi / 180))
+        # self.vely = math.cos(self.direction * (math.pi / 180))
+        # self.x += self.velx * self.velocity
+        # self.y += self.vely * self.velocity
+
+
+
+
+        # #turning motion
+        # self.rotationVelocity += self.rotationAcceleration
+
+        # self.carSprite.rotation += self.rotationVelocity
+        # self.carSprite.update(x=self.x, y=self.y)
+
+
+
+        self.velocity += self.acc
+        self.velocity *= Car.FRICTION
+        # self.constrainVel()
+
+        driftVector = vec2(self.direction)
+        driftVector = driftVector.rotate(90)
+
+        addVector = vec2(0, 0)
+        addVector.x += self.velocity * self.direction.x
+        addVector.x += self.driftMomentum * driftVector.x
+        addVector.y += self.velocity * self.direction.y
+        addVector.y += self.driftMomentum * driftVector.y
+        self.driftMomentum *= self.driftFriction
+
+        if addVector.length() != 0:
+            addVector.normalize()
+
+        addVector.x * abs(self.velocity)
+        addVector.y * abs(self.velocity)
+
+        self.x += addVector.x
+        self.y += addVector.y
+
+
+
 
     def updateControls(self):
-        #forwards and backwards movement
-        if self.accelerating == True:
-            self.acceleration = Car.ACCELERATION
-        elif self.reversing == True:
-            self.acceleration = -Car.ACCELERATION
-        else:
-            #friction
-            if self.velocity > .1:
-                self.acceleration = -Car.FRICTION
-            elif self.velocity < -.1:
-                self.acceleration = Car.FRICTION
+        # #forwards and backwards movement
+        # if self.accelerating == True:
+        #     self.acceleration = Car.ACCELERATION
+        # elif self.reversing == True:
+        #     self.acceleration = -Car.ACCELERATION
+        # else:
+        #     self.acceleration = 0
+
+        # #turning movement 
+        # if self.turningLeft and self.velocity > 0:
+        #     self.rotationAcceleration = -Car.ROTATION_ACCELERATION
+        # elif self.turningRight and self.velocity > 0:
+        #     self.rotationAcceleration = Car.ROTATION_ACCELERATION
+
+        # #turining is opposite when moving backwards
+        # elif self.turningRight and self.velocity < 0:
+        #     self.rotationAcceleration = -Car.ROTATION_ACCELERATION
+        # elif self.turningLeft and self.velocity < 0:
+        #     self.rotationAcceleration = Car.ROTATION_ACCELERATION
+        # else:
+        #     self.rotationAcceleration = 0
+        #     self.rotationVelocity = 0
+
+
+        # driftAmount = self.velocity * Car.MAX_ROTATION_VELOCITY
+        # if self.velocity < 2:
+        #     driftAmount = 0
+
+        # if self.turningLeft:
+        #     self.rotationVelocity -= Car.MAX_ROTATION_VELOCITY
+        #     self.driftMomentum -= driftAmount
+        # elif self.turningRight:
+        #     self.rotationVelocity += Car.MAX_ROTATION_VELOCITY
+        #     self.driftMomentum += driftAmount
+        # else:
+        #     self.rotationAcceleration = 0
+        #     self.rotationVelocity = 0
+        
+        # if self.accelerating == True:
+        #     self.acceleration = Car.ACCELERATION
+        # elif self.reversing == True:
+        #     self.acceleration = -Car.ACCELERATION
+        # else:
+        #     self.acceleration = 0
+
+        multiplier = 1
+        if abs(self.velocity) < 5:
+            multiplier = abs(self.velocity) / 5
+        if self.velocity < 0:
+            multiplier *= -1
+
+        driftAmount = self.velocity * Car.MAX_ROTATION_VELOCITY * self.width / (9.0 * 8.0)
+        if self.velocity < 5:
+            driftAmount = 0
+
+        if self.turningLeft:
+            self.direction = self.direction.rotate(math.degrees(Car.MAX_ROTATION_VELOCITY) * multiplier)
+
+            self.driftMomentum -= driftAmount
+        elif self.turningRight:
+            self.direction = self.direction.rotate(-math.degrees(Car.MAX_ROTATION_VELOCITY) * multiplier)
+            self.driftMomentum += driftAmount
+        self.acc = 0
+        if self.accelerating:
+            if self.velocity < 0:
+                self.acceleration = 3 * Car.ACCELERATION
             else:
-                self.velocity = 0
-                self.acceleration=0
+                self.acc = Car.ACCELERATION
+        elif self.reversing:
+            if self.velocity > 0:
+                self.acceleration = -3 * Car.ACCELERATION
+            else:
+                self.acceleration = -1 * Car.ACCELERATION
 
-        #turning movement 
-        if self.turningLeft and self.velocity > 0:
-            # self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
-            self.rotationAcceleration = -Car.ROTATION_ACCELERATION
-        elif self.turningRight and self.velocity > 0:
-            # self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
-            self.rotationAcceleration = Car.ROTATION_ACCELERATION
 
-        #turining is opposite when moving backwards
-        elif self.turningRight and self.velocity < 0:
-            # self.rotationVelocity = -Car.MAX_ROTATION_VELOCITY
-            self.rotationAcceleration = -Car.ROTATION_ACCELERATION
-        elif self.turningLeft and self.velocity < 0:
-            # self.rotationVelocity = Car.MAX_ROTATION_VELOCITY
-            self.rotationAcceleration = Car.ROTATION_ACCELERATION
-        else:
-            self.rotationAcceleration = 0
-            self.rotationVelocity = 0
 
 
     def render(self):
-        self.hitWall()
+        # self.hitWall()
         self.update()
         self.carSprite.draw()
